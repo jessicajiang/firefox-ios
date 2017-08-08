@@ -125,9 +125,9 @@ class Pocket {
 
     private func addAPIKey(url: URL) -> URL {
         let bundle = Bundle.main
-        guard let api_key = bundle.object(forInfoDictionaryKey: PocketEnvAPIKey) as? String else {
-            return url
-        }
+//        guard let api_key = bundle.object(forInfoDictionaryKey: PocketEnvAPIKey) as? String else {
+//            return url
+//        }
         return url.withQueryParam("consumer_key", value: api_key)
     }
 

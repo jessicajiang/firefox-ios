@@ -69,6 +69,7 @@ open class Site: Identifiable {
         return URL(string: url)?.domainURL ?? URL(string: "about:blank")!
     }
 
+    open var isPocket: Bool?
     open let url: String
     open let title: String
     open var metadata: PageMetadata?
