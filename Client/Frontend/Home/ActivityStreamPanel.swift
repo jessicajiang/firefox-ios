@@ -39,7 +39,7 @@ struct UXSizeClasses {
     var regular: CGFloat
     var unspecified: CGFloat
 
-    init(compact compact: CGFloat, regular regular: CGFloat, other other: CGFloat) {
+    init(compact: CGFloat, regular: CGFloat, other: CGFloat) {
         self.compact = compact
         self.regular = regular
         self.unspecified = other
@@ -160,21 +160,23 @@ extension ActivityStreamPanel {
         case topSites
         case highlights
         case highlightIntro
+        case pocket
 
-        static let count = 3
-        static let allValues = [topSites, highlights, highlightIntro]
+        static let count = 4
+        static let allValues = [topSites, highlights, highlightIntro, pocket]
 
         var title: String? {
             switch self {
             case .highlights: return Strings.ASHighlightsTitle
             case .topSites: return nil
             case .highlightIntro: return nil
+            case .pocket: return Strings.ASPocketTitle
             }
         }
 
         var headerHeight: CGSize {
             switch self {
-            case .highlights: return CGSize(width: 50, height: 40)
+            case .highlights, .pocket: return CGSize(width: 50, height: 40)
             case .topSites: return CGSize(width: 0, height: 0)
             case .highlightIntro: return CGSize(width: 50, height: 2)
             }
@@ -182,14 +184,14 @@ extension ActivityStreamPanel {
 
         var footerHeight: CGSize {
             switch self {
-            case .highlights, .highlightIntro: return CGSize.zero
+            case .highlights, .highlightIntro .pocket: return CGSize.zero
             case .topSites: return CGSize(width: 50, height: 5)
             }
         }
 
         func cellHeight(_ traits: UITraitCollection, width: CGFloat) -> CGFloat {
             switch self {
-            case .highlights: return ASPanelUX.highlightCellHeight
+            case .highlights, .pocket: return ASPanelUX.highlightCellHeight
             case .topSites: return 0 //calculated dynamically
             case .highlightIntro: return 200
             }
@@ -206,7 +208,7 @@ extension ActivityStreamPanel {
                 currentTraits = UITraitCollection(horizontalSizeClass: .compact)
             }
             switch self {
-            case .highlights:
+            case .highlights, .pocket:
                 var insets = ASPanelUX.sectionInsetsForSizeClass[currentTraits.horizontalSizeClass]
                 insets = insets + ASPanelUX.MinimumInsets
                 return insets
@@ -219,7 +221,7 @@ extension ActivityStreamPanel {
 
         func numberOfItemsForRow(_ traits: UITraitCollection) -> CGFloat {
             switch self {
-            case .highlights:
+            case .highlights, .pocket:
                 var numItems: CGFloat = ASPanelUX.numberOfItemsPerRowForSizeClassIpad[traits.horizontalSizeClass]
                 if UIInterfaceOrientationIsPortrait(UIApplication.shared.statusBarOrientation) {
                     numItems = numItems - 1
@@ -238,7 +240,7 @@ extension ActivityStreamPanel {
             let inset = sectionInsets(traits, frameWidth: frameWidth) * 2
 
             switch self {
-            case .highlights:
+            case .highlights, .pocket:
                 let numItems = numberOfItemsForRow(traits)
                 return CGSize(width: floor(((frameWidth - inset) - (ASPanelUX.MinimumInsets * (numItems - 1))) / numItems), height: height)
             case .topSites:
@@ -250,7 +252,7 @@ extension ActivityStreamPanel {
 
         var headerView: UIView? {
             switch self {
-            case .highlights:
+            case .highlights, .pocket:
                 let view = ASHeaderView()
                 view.title = title
                 return view
@@ -268,6 +270,7 @@ extension ActivityStreamPanel {
             case .topSites: return "TopSiteCell"
             case .highlights: return "HistoryCell"
             case .highlightIntro: return "HighlightIntroCell"
+            case .pocket: return "PocketCell"
             }
         }
 
