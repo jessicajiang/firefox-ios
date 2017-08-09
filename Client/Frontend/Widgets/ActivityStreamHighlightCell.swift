@@ -171,6 +171,11 @@ class ActivityStreamHighlightCell: UICollectionViewCell {
             self.descriptionLabel.text = Strings.HighlightVistedText
             self.statusIcon.image = UIImage(named: "context_viewed")
         }
+        
+        if let isPocket = site.isPocket, isPocket {
+            self.descriptionLabel.text = "Trending"
+            self.statusIcon.image = UIImage(named: "context_viewed")
+        }
     }
 }
 

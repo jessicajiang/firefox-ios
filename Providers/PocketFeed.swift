@@ -8,7 +8,7 @@ import Shared
 import Deferred
 import Storage
 
-private let PocketEnvAPIKey = "PocketEnvironmentAPIKey"
+private let PocketEnvAPIKey = "56694-41da4d4ba9d03ece07fb35a4"
 private let PocketGlobalFeed = "https://getpocket.com/v3/firefox/global-recs"
 private let MaxCacheAge: Timestamp = OneMinuteInMilliseconds * 60 // 1 hour in milliseconds
 

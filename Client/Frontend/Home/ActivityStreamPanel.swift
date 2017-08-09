@@ -10,6 +10,7 @@ import WebImage
 import XCGLogger
 import Telemetry
 import SnapKit
+import Alamofire
 
 private let log = Logger.browserLogger
 private let DefaultSuggestedSitesKey = "topSites.deletedSuggestedSites"
@@ -81,6 +82,7 @@ class ActivityStreamPanel: UICollectionViewController, HomePanel {
     }()
 
     var highlights: [Site] = []
+    var pocketSites: [Site] = []
 
     init(profile: Profile, telemetry: ActivityStreamTracker? = nil) {
         self.profile = profile
@@ -405,8 +407,10 @@ extension ActivityStreamPanel {
         switch Section(indexPath.section) {
         case .topSites:
             return configureTopSitesCell(cell, forIndexPath: indexPath)
-        case .highlights, .pocket:
+        case .highlights:
             return configureHistoryItemCell(cell, forIndexPath: indexPath)
+        case .pocket:
+            return configurePocketItemCell(cell, forIndexPath: indexPath)
         case .highlightIntro:
             return configureHighlightIntroCell(cell, forIndexPath: indexPath)
         } //TODO
@@ -423,6 +427,13 @@ extension ActivityStreamPanel {
 
     func configureHistoryItemCell(_ cell: UICollectionViewCell, forIndexPath indexPath: IndexPath) -> UICollectionViewCell {
         let site = highlights[indexPath.row]
+        let simpleHighlightCell = cell as! ActivityStreamHighlightCell
+        simpleHighlightCell.configureWithSite(site)
+        return simpleHighlightCell
+    }
+    
+    func configurePocketItemCell(_ cell: UICollectionViewCell, forIndexPath indexPath: IndexPath) -> UICollectionViewCell {
+        let site = pocketSites[indexPath.row]
         let simpleHighlightCell = cell as! ActivityStreamHighlightCell
         simpleHighlightCell.configureWithSite(site)
         return simpleHighlightCell
@@ -459,10 +470,11 @@ extension ActivityStreamPanel: DataObserverDelegate {
     // Reloads both highlights and top sites data from their respective caches. Does not invalidate the cache.
     // See ActivityStreamDataObserver for invalidation logic.
     func reloadAll() {
+        self.getPocketSites()
         accumulate([self.getHighlights, self.getTopSites]).uponQueue(.main) { _ in
             // If there is no pending cache update and highlights are empty. Show the onboarding screen
             self.showHighlightIntro = self.highlights.isEmpty && !self.pendingCacheUpdate
-            self.collectionView?.reloadData()
+//            self.collectionView?.reloadData()
         }
     }
 
@@ -477,6 +489,55 @@ extension ActivityStreamPanel: DataObserverDelegate {
             self.reportMissingData(sites: sites, source: .Highlights)
             self.highlights = sites
             return succeed()
+        }
+    }
+    
+    func getPocketSites() {
+//        let test = Pocket()
+//        return test.globalFeed(items: 4).bindQueue(.main) { pStory in
+//            for pocketStory in pStory {
+//                let pM = PageMetadata(id: nil,
+//                                  siteURL: "",
+//                                  mediaURL: pocketStory.imageURL.absoluteString,
+//                                  title: nil,
+//                                  description: nil,
+//                                  type: nil,
+//                                  providerName: nil,
+//                                  mediaDataURI: nil)
+//                let site = Site(url: pocketStory.url.absoluteString, title: pocketStory.title)
+//                site.isPocket = true
+//                site.metadata = pM
+//                self.pocketSites.append(site)
+//            }
+////            self.pocketSites = localSites
+//            return succeed()
+//        }
+        
+        
+        //let count = 4 //TODO: ASPanelUX
+        var localSites : [Site] = []
+        Alamofire.request("https://getpocket.com/v3/firefox/global-recs?consumer_key=56694-41da4d4ba9d03ece07fb35a4&count=4").responseJSON { response in
+            if let JSON = response.result.value {
+                let result = JSON as! NSDictionary
+                let list = result.object(forKey: "list") as! NSArray
+                for val in list {
+                    let newVal = val as! NSDictionary
+                    let site = Site(url: newVal.object(forKey: "dedupe_url") as! String, title: newVal.object(forKey: "title") as! String)
+                    site.isPocket = true
+                    let pM = PageMetadata(id: nil,
+                          siteURL: "",
+                          mediaURL: newVal.object(forKey: "image_src") as? String,
+                          title: nil,
+                          description: nil,
+                          type: nil,
+                          providerName: nil,
+                          mediaDataURI: nil)
+                    site.metadata = pM
+                    localSites.append(site)
+                }
+                self.pocketSites = localSites
+                self.collectionView?.reloadData()
+            }
         }
     }
 
@@ -625,8 +686,10 @@ extension ActivityStreamPanel: DataObserverDelegate {
     func selectItemAtIndex(_ index: Int, inSection section: Section) {
         let site: Site?
         switch section {
-        case .highlights, .pocket:
+        case .highlights:
             site = self.highlights[index]
+        case .pocket:
+            site = self.pocketSites[index]
         case .topSites, .highlightIntro:
             return
         }
