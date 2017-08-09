@@ -158,19 +158,19 @@ class ActivityStreamPanel: UICollectionViewController, HomePanel {
 extension ActivityStreamPanel {
     enum Section: Int {
         case topSites
+        case pocket
         case highlights
         case highlightIntro
-        case pocket
 
         static let count = 4
-        static let allValues = [topSites, highlights, highlightIntro, pocket]
+        static let allValues = [topSites, pocket, highlights, highlightIntro]
 
         var title: String? {
             switch self {
             case .highlights: return Strings.ASHighlightsTitle
+            case .pocket: return Strings.ASPocketTitle
             case .topSites: return nil
             case .highlightIntro: return nil
-            case .pocket: return Strings.ASPocketTitle
             }
         }
 
@@ -184,8 +184,8 @@ extension ActivityStreamPanel {
 
         var footerHeight: CGSize {
             switch self {
-            case .highlights, .highlightIntro .pocket: return CGSize.zero
-            case .topSites: return CGSize(width: 50, height: 5)
+            case .highlights, .highlightIntro: return CGSize.zero
+            case .topSites, .pocket: return CGSize(width: 50, height: 5)
             }
         }
 
@@ -252,33 +252,30 @@ extension ActivityStreamPanel {
 
         var headerView: UIView? {
             switch self {
-            case .highlights, .pocket:
+            case .highlights, .highlightIntro, .pocket:
                 let view = ASHeaderView()
                 view.title = title
                 return view
             case .topSites:
                 return nil
-            case .highlightIntro:
-                let view = ASHeaderView()
-                view.title = title
-                return view
             }
         }
 
         var cellIdentifier: String {
             switch self {
             case .topSites: return "TopSiteCell"
-            case .highlights: return "HistoryCell"
+            case .highlights, .pocket: return "HistoryCell"
             case .highlightIntro: return "HighlightIntroCell"
-            case .pocket: return "PocketCell"
+            //case .pocket: return "PocketCell" TODO
             }
         }
 
         var cellType: UICollectionViewCell.Type {
             switch self {
             case .topSites: return ASHorizontalScrollCell.self
-            case .highlights: return ActivityStreamHighlightCell.self
+            case .highlights, .pocket: return ActivityStreamHighlightCell.self
             case .highlightIntro: return HighlightIntroCell.self
+            //TODO:
             }
         }
 
@@ -301,7 +298,7 @@ extension ActivityStreamPanel: UICollectionViewDelegateFlowLayout {
                 let view = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionElementKindSectionHeader, withReuseIdentifier: "Header", for: indexPath) as! ASHeaderView
                 let title = Section(indexPath.section).title
                 switch Section(indexPath.section) {
-                case .highlights, .highlightIntro:
+                case .highlights, .highlightIntro, .pocket:
                     view.title = title
                     return view
                 case .topSites:
@@ -312,7 +309,7 @@ extension ActivityStreamPanel: UICollectionViewDelegateFlowLayout {
                 switch Section(indexPath.section) {
                 case .highlights, .highlightIntro:
                     return UICollectionReusableView()
-                case .topSites:
+                case .topSites, .pocket:
                     return view
             }
             default:
@@ -329,7 +326,7 @@ extension ActivityStreamPanel: UICollectionViewDelegateFlowLayout {
         let cellSize = Section(indexPath.section).cellSize(for: self.traitCollection, frameWidth: self.view.frame.width)
 
         switch Section(indexPath.section) {
-        case .highlights:
+        case .highlights, .pocket:
             if highlights.isEmpty {
                 return CGSize.zero
             }
@@ -341,27 +338,27 @@ extension ActivityStreamPanel: UICollectionViewDelegateFlowLayout {
             return CGSize(width: cellSize.width, height: estimatedLayout.size.height)
         case .highlightIntro:
             return cellSize
-        }
+        }//TODO:
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
         switch Section(section) {
-        case .highlights:
+        case .highlights, .pocket:
             return highlights.isEmpty ? CGSize.zero : CGSize(width: self.view.frame.size.width, height: Section(section).headerHeight.height)
         case .highlightIntro:
             return !highlights.isEmpty ? CGSize.zero : CGSize(width: self.view.frame.size.width, height: Section(section).headerHeight.height)
         case .topSites:
             return Section(section).headerHeight
-        }
+        }//TODO
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForFooterInSection section: Int) -> CGSize {
         switch Section(section) {
         case .highlights, .highlightIntro:
             return CGSize.zero
-        case .topSites:
+        case .topSites, .pocket:
             return Section(section).footerHeight
-        }
+        }//TODO
     }
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
@@ -387,14 +384,14 @@ extension ActivityStreamPanel: UICollectionViewDelegateFlowLayout {
 extension ActivityStreamPanel {
 
     override func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 3
+        return 4
     }
 
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         switch Section(section) {
         case .topSites:
             return topSitesManager.content.isEmpty ? 0 : 1
-        case .highlights:
+        case .highlights, .pocket:
             return self.highlights.count
         case .highlightIntro:
             return self.highlights.isEmpty && showHighlightIntro ? 1 : 0
@@ -408,11 +405,11 @@ extension ActivityStreamPanel {
         switch Section(indexPath.section) {
         case .topSites:
             return configureTopSitesCell(cell, forIndexPath: indexPath)
-        case .highlights:
+        case .highlights, .pocket:
             return configureHistoryItemCell(cell, forIndexPath: indexPath)
         case .highlightIntro:
             return configureHighlightIntroCell(cell, forIndexPath: indexPath)
-        }
+        } //TODO
     }
 
     //should all be collectionview
@@ -533,6 +530,7 @@ extension ActivityStreamPanel: DataObserverDelegate {
             return succeed()
         }
     }
+    //TODO: Add getPocketStories
 
     func willInvalidateDataSources() {
         self.pendingCacheUpdate = true
@@ -599,7 +597,7 @@ extension ActivityStreamPanel: DataObserverDelegate {
         guard let indexPath = self.collectionView?.indexPathForItem(at: point) else { return }
 
         switch Section(indexPath.section) {
-        case .highlights:
+        case .highlights, .pocket:
             presentContextMenu(for: indexPath)
         case .topSites:
             let topSiteCell = self.collectionView?.cellForItem(at: indexPath) as! ASHorizontalScrollCell
@@ -608,7 +606,7 @@ extension ActivityStreamPanel: DataObserverDelegate {
             presentContextMenu(for: topSiteIndexPath)
         case .highlightIntro:
             break
-        }
+        }//TODO
     }
 
     fileprivate func fetchBookmarkStatus(for site: Site, with indexPath: IndexPath, forSection section: Section, completionHandler: @escaping () -> Void) {
@@ -627,7 +625,7 @@ extension ActivityStreamPanel: DataObserverDelegate {
     func selectItemAtIndex(_ index: Int, inSection section: Section) {
         let site: Site?
         switch section {
-        case .highlights:
+        case .highlights, .pocket:
             site = self.highlights[index]
         case .topSites, .highlightIntro:
             return
@@ -652,7 +650,7 @@ extension ActivityStreamPanel: HomePanelContextMenu {
         let site: Site
 
         switch Section(indexPath.section) {
-        case .highlights:
+        case .highlights, .pocket:
             site = highlights[indexPath.row]
         case .topSites:
             site = topSitesManager.content[indexPath.item]
@@ -677,13 +675,13 @@ extension ActivityStreamPanel: HomePanelContextMenu {
             if let topSiteCell = self.collectionView?.cellForItem(at: IndexPath(row: 0, section: 0)) as? ASHorizontalScrollCell {
                 sourceView = topSiteCell.collectionView.cellForItem(at: indexPath)
             }
-        case .highlights:
+        case .highlights, .pocket:
             pingSource = .Highlights
             index = indexPath.row
             sourceView = self.collectionView?.cellForItem(at: indexPath)
         case .highlightIntro:
             return nil
-        }
+        }//TODO
 
         let openInNewTabAction = PhotonActionSheetItem(title: Strings.OpenInNewTabContextMenuTitle, iconString: "") { action in
             self.homePanelDelegate?.homePanelDidRequestToOpenInNewTab(siteURL, isPrivate: false)
@@ -775,9 +773,10 @@ extension ActivityStreamPanel: HomePanelContextMenu {
         var actions = [openInNewTabAction, openInNewPrivateTabAction, bookmarkAction, shareAction]
 
         switch Section(indexPath.section) {
-            case .highlights: actions.append(contentsOf: [dismissHighlightAction, deleteFromHistoryAction])
+            case .highlights, .pocket: actions.append(contentsOf: [dismissHighlightAction, deleteFromHistoryAction])
             case .topSites: actions.append(contentsOf: topSiteActions)
             case .highlightIntro: break
+            //TODO
         }
         return actions
     }
