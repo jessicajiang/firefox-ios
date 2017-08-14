@@ -46,11 +46,7 @@ class TodayBookmarkViewController: UIViewController, UITableViewDelegate, UITabl
         super.viewDidLoad()
         //Adds "Show more/Show less" functionality. Widgets have a default NCWidgetDisplayMode.compact height of 110 pixels that cannot be changed, but the NCWidgetDisplayMode.expanded height can be changed to anything.
         if bookmarkCount > 3 {
-            if #available(iOS 10.0, *) {
-                self.extensionContext?.widgetLargestAvailableDisplayMode = NCWidgetDisplayMode.expanded
-            } else {
-                // Fallback on earlier versions
-            }
+            self.extensionContext?.widgetLargestAvailableDisplayMode = NCWidgetDisplayMode.expanded
         }
         tableView.delegate = self
         tableView.dataSource = self
@@ -91,7 +87,7 @@ class TodayBookmarkViewController: UIViewController, UITableViewDelegate, UITabl
             }
         }
         //Filler image
-        cell?.imageView?.image = UIImage(named: "favicon.png")
+        cell?.imageView?.image = UIImage(named: "bookmark.png")
         //Setting the cell favicon. UIImageViewExtensions/FaviconFetcher can't be accessed by extensions afaik.(?)
         let currentBookmarkURL = bookmarks[indexPath.row]
         if let url = currentBookmarkURL.icon?.url.asURL {
@@ -143,10 +139,8 @@ class TodayBookmarkViewController: UIViewController, UITableViewDelegate, UITabl
         }
     }
     //Enabling "Show More"/"Show Less" in widget
-    @available(iOS 10.0, *)
     func widgetActiveDisplayModeDidChange(_ activeDisplayMode: NCWidgetDisplayMode, withMaximumSize maxSize: CGSize) {
         let expanded = activeDisplayMode == NCWidgetDisplayMode.expanded
         preferredContentSize = expanded ? CGSize(width: maxSize.width, height: bookmarkCellHeight * CGFloat(bookmarkCount)) : CGSize(width: maxSize.width, height: bookmarkCellHeight * 3)
-        
     }
 }
