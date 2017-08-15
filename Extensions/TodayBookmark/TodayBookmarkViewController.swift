@@ -24,6 +24,7 @@ class TodayBookmarkViewController: UIViewController, UITableViewDelegate, UITabl
     fileprivate var compactBookmarkCount: Int //Number of bookmarks shown initially (Before "Show More")
     fileprivate var bookmarkCellHeight: CGFloat //Depends on # of bookmarks, as height is divided
     fileprivate var tableHeight: CGFloat
+    fileprivate var tableWidth =  UIScreen.main.bounds.width - CGFloat(16)
     
     init() {
         //Gather the bookmark data
@@ -35,7 +36,7 @@ class TodayBookmarkViewController: UIViewController, UITableViewDelegate, UITabl
         compactBookmarkCount = bookmarkCount <= 3 ? bookmarkCount : 3
         bookmarkCellHeight = bookmarkCount <= 0 ? CGFloat(widgetHeight) : CGFloat(widgetHeight/compactBookmarkCount)
         tableHeight = bookmarkCount <= 0 ? CGFloat(bookmarkCellHeight) : bookmarkCellHeight * CGFloat(bookmarkCount)
-        self.tableView = UITableView(frame: .zero)
+        self.tableView = UITableView(frame: CGRect(x: 0, y: 0, width: tableWidth, height: tableHeight))
         
         super.init(nibName: nil, bundle: nil)
     }
@@ -54,7 +55,7 @@ class TodayBookmarkViewController: UIViewController, UITableViewDelegate, UITabl
         }
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.frame = CGRect(x: 0, y: 0, width: view.bounds.width - 16, height: tableHeight)
+        tableView.register(BookmarkCell.self, forCellReuseIdentifier: BookmarkCellIdentifier)
         self.view.addSubview(self.tableView)
     }
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -66,32 +67,32 @@ class TodayBookmarkViewController: UIViewController, UITableViewDelegate, UITabl
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        var cell = tableView.dequeueReusableCell(withIdentifier: BookmarkCellIdentifier)
+        var cell = tableView.dequeueReusableCell(withIdentifier: BookmarkCellIdentifier) as! BookmarkCell
         if cell == nil {
             let cellStyle = bookmarkCount <= 0 ? UITableViewCellStyle.default : UITableViewCellStyle.subtitle
-            cell = UITableViewCell(style: cellStyle, reuseIdentifier: BookmarkCellIdentifier)
+            cell = UITableViewCell(style: cellStyle, reuseIdentifier: BookmarkCellIdentifier) as! BookmarkCell
         }
-
+        //cell.selectionStyle = .none
         switch bookmarkCount {
         case 0: //No bookmarks. Show one non-interactive cell with text.
-            cell?.selectionStyle = .none
-            cell?.textLabel?.text = noBookmarksString
-            cell?.textLabel?.numberOfLines = 0
-            cell?.textLabel?.lineBreakMode = .byWordWrapping
-            cell?.textLabel?.textAlignment = .center
-            return cell!
+            cell.selectionStyle = .none
+            cell.textLabel?.text = noBookmarksString
+            cell.textLabel?.numberOfLines = 0
+            cell.textLabel?.lineBreakMode = .byWordWrapping
+            cell.textLabel?.textAlignment = .center
+            return cell
         case 1: //One bookmark. Because widget height must be 110, it looks really funky. Include the URL as a detailTextLabel to make the space look less empty.
-            cell?.textLabel?.text = bookmarks[indexPath.row].title
-            cell?.detailTextLabel?.text = bookmarks[indexPath.row].url
+            cell.textLabel?.text = bookmarks[indexPath.row].title
+            cell.detailTextLabel?.text = bookmarks[indexPath.row].url
         default:
             if bookmarks[indexPath.row].title.isEmpty {
-                cell?.textLabel?.text = bookmarks[indexPath.row].url
+                cell.textLabel?.text = bookmarks[indexPath.row].url
             } else {
-                cell?.textLabel?.text = bookmarks[indexPath.row].title
+                cell.textLabel?.text = bookmarks[indexPath.row].title
             }
         }
         //Filler image
-        cell?.imageView?.image = UIImage(named: "favicon.png")
+        cell.imageView?.image = UIImage(named: "favicon.png")
         //Setting the cell favicon. UIImageViewExtensions/FaviconFetcher can't be accessed by extensions afaik.(?)
         let currentBookmarkURL = bookmarks[indexPath.row]
         if let url = currentBookmarkURL.icon?.url.asURL {
@@ -105,26 +106,41 @@ class TodayBookmarkViewController: UIViewController, UITableViewDelegate, UITabl
                     return
                 }
                 DispatchQueue.main.async {
-                    cell?.imageView?.image = UIImage(data: data!)
-                    //Setting the size of the favicon. For some reason has to be here or else the icons resize upon selection.
-                    let itemSize = CGSize(width: self.bookmarkCellHeight * 0.6, height: self.bookmarkCellHeight * 0.6)
-                    UIGraphicsBeginImageContextWithOptions(itemSize, false, UIScreen.main.scale);
-                    let imageRect = CGRect(x: 0.0, y: 0.0, width: itemSize.width, height: itemSize.height)
-                    cell?.imageView?.image?.draw(in: imageRect)
-                    cell?.imageView?.image? = UIGraphicsGetImageFromCurrentImageContext()!;
-                    cell?.imageView?.layer.cornerRadius = self.bookmarkCount >= 2 ? CGFloat(4) : CGFloat(8)
-                    UIGraphicsEndImageContext();
+                    cell.imageView?.image = UIImage(data: data!)
+//                    cell.imageView?.frame = CGRect(x: 0.0, y: 0.0, width: 25, height: 25)
+                    cell.imageView?.layoutIfNeeded() //TODO: AHHH
+                    self.tableView.reloadData()
+                    cell.layoutSubviews()
                 }
             }.resume()
         }
-        return cell!
+        //Setting the size of the favicon. For some reason has to be here or else the icons resize upon selection.
+        //TODO: // AHHHH
+//        let scalingSize = self.bookmarkCellHeight * 0.6
+//        let itemSize = CGSize(width: scalingSize, height: scalingSize)
+//        UIGraphicsBeginImageContextWithOptions(itemSize, false, 0.0);
+//        cell.imageView?.frame = CGRect(x: 0.0, y: 0.0, width: itemSize.width, height: itemSize.height)
+//        cell.imageView?.image? = UIGraphicsGetImageFromCurrentImageContext()!;
+//        cell.imageView?.contentMode = .scaleAspectFill
+//        cell.imageView?.clipsToBounds = true
+//        //cell?.imageView?.autoresizingMask = [.None]
+//        cell.imageView?.layer.cornerRadius = self.bookmarkCount >= 2 ? CGFloat(4) : CGFloat(8)
+//        UIGraphicsEndImageContext();
+        self.view.layoutIfNeeded()
+        self.tableView.reloadData()
+        return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        //let cell = self.tableView.cellForRow(at: indexPath) as! BookmarkCell
+        //cell.imageView?.frame = CGRect(x: 0.0, y: 0.0, width: 25, height: 25)
+        //AHHH
         if bookmarkCount > 0 {
             tableView.deselectRow(at: indexPath as IndexPath, animated: false)
             let encodedString = bookmarks[indexPath.row].url.escape()
             openContainingApp("?url=\(encodedString)")
+            self.view.layoutIfNeeded()
+            self.tableView.reloadData()
         }
     }
     //Opening a link
@@ -150,4 +166,20 @@ class TodayBookmarkViewController: UIViewController, UITableViewDelegate, UITabl
         
     }
 }
-
+class BookmarkCell: UITableViewCell {
+    override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+    }
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        self.imageView?.frame = CGRect(x: 0, y: 0, width: 55 * 0.6, height: 55 * 0.6)
+        self.imageView?.layer.masksToBounds = true
+        self.imageView?.clipsToBounds = true
+        //AHHHH
+        self.imageView?.contentMode = .scaleAspectFill
+        self.imageView?.layoutIfNeeded()
+    }
+}
