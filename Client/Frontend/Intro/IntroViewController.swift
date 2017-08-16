@@ -17,12 +17,14 @@ struct IntroViewControllerUX {
     static let StartBrowsingButtonTitle = NSLocalizedString("Start Browsing", tableName: "Intro", comment: "See http://mzl.la/1T8gxwo")
     static let StartBrowsingButtonColor = UIColor(rgb: 0x4990E2)
     static let StartBrowsingButtonHeight = 56
-
+    
     static let SignInButtonTitle = NSLocalizedString("Sign in to Firefox", tableName: "Intro", comment: "See http://mzl.la/1T8gxwo")
     static let SignInButtonColor = UIColor(rgb: 0x45A1FF)
     static let SignInButtonHeight = 60
+    static let SignInButtonWidth = 290
 
     static let CardTextLineHeight = UIScreen.main.bounds.width <= 320 ? CGFloat(2) : CGFloat(6)
+    static let CardTextWidth = UIScreen.main.bounds.width <= 320 ? 240 : 280
     
     static let CardTitleWelcome = NSLocalizedString("Intro.Slides.Welcome.Title", tableName: "Intro", value: "Thanks for choosing Firefox!", comment: "Title for the first panel 'Welcome' in the First Run tour.")
     static let CardTitleSearch = NSLocalizedString("Intro.Slides.Search.Title", tableName: "Intro", value: "Your search, your way", comment: "Title for the second  panel 'Search' in the First Run tour.")
@@ -132,7 +134,7 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
             make.centerY.equalTo(self.startBrowsingButton.snp.top).offset(-IntroViewControllerUX.PagerCenterOffsetFromScrollViewBottom)
         }
 
-        func addCard(title: String, text: String, button: UIButton? = nil) {
+        func addCard(title: String, text: String) {
             let introView = UIView()
             self.introViews.append(introView)
             
@@ -145,42 +147,19 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
             titleLabel.snp.makeConstraints { (make ) -> Void in
                 make.top.equalTo(introView).offset(20)
                 make.centerX.equalTo(introView)
-                make.width.equalTo(self.view.frame.width <= 320 ? 240 : 280)
+                make.width.equalTo(IntroViewControllerUX.CardTextWidth)
             }
-            let titleAndButtonContainer = UIView()
-            introView.addSubview(titleAndButtonContainer)
             
             let textLabel = UILabel()
             textLabel.numberOfLines = 0
             textLabel.attributedText = attributedStringForLabel(text)
             textLabels.append(textLabel)
-            titleAndButtonContainer.addSubview(textLabel)
+            introView.addSubview(textLabel)
             textLabel.snp.makeConstraints({ (make) -> Void in
-                make.top.equalTo(titleAndButtonContainer)
-                if button == nil {
-                    make.bottom.equalTo(titleAndButtonContainer)
-                }
-                make.centerX.equalTo(titleAndButtonContainer)
-                make.width.equalTo(titleAndButtonContainer)
-            })
-            if let button = button {
-                titleAndButtonContainer.addSubview(button)
-                button.snp.makeConstraints { (make) -> Void in
-                    if text == "" {
-                        make.top.equalTo(titleAndButtonContainer.snp.top)
-                    } else {
-                        make.top.equalTo(textLabel.snp.bottom).offset(16)
-                    }
-                    make.centerX.equalTo(titleAndButtonContainer)
-                    make.width.equalTo(titleAndButtonContainer)
-                    make.bottom.equalTo(titleAndButtonContainer).offset(-10)
-                }
-            }
-            titleAndButtonContainer.snp.makeConstraints { (make) in
+                make.top.equalTo(titleLabel.snp.bottom).offset(36)
                 make.centerX.equalTo(introView)
-                make.centerY.equalTo(introView)
-                make.width.equalTo(self.view.frame.width <= 320 ? 240 : 280)
-            }
+                make.width.equalTo(IntroViewControllerUX.CardTextWidth)
+            })
         }
         addCard(title: IntroViewControllerUX.CardTitleWelcome, text: IntroViewControllerUX.CardTextWelcome)
         addCard(title: IntroViewControllerUX.CardTitleSearch, text: IntroViewControllerUX.CardTextSearch)
@@ -196,9 +175,12 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
         signInButton.addTarget(self, action: #selector(IntroViewController.SELlogin), for: UIControlEvents.touchUpInside)
         signInButton.snp.makeConstraints { (make) -> Void in
             make.height.equalTo(IntroViewControllerUX.SignInButtonHeight)
+            make.width.equalTo(IntroViewControllerUX.SignInButtonWidth)
+            //make.bottom.equalTo(self.view).offset(IntroViewControllerUX.StartBrowsingButtonHeight)
+            make.centerX.equalTo(pageControl)
         }
 
-        addCard(title: IntroViewControllerUX.CardTitleSync, text: IntroViewControllerUX.CardTextSync, button: signInButton)
+        addCard(title: IntroViewControllerUX.CardTitleSync, text: IntroViewControllerUX.CardTextSync)
 
         // Add all the cards to the view, make them invisible with zero alpha
 
@@ -364,6 +346,10 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
             }, completion: { _ in
                 if page == (IntroViewControllerUX.NumberOfCards - 1) {
                     self.scrollView.signinButton = self.signInButton
+                    self.scrollView.signinButton?.snp.makeConstraints { (make) -> Void in
+                        make.bottom.equalTo(self.scrollView)
+                        make.centerX.equalTo(self.scrollView)
+                    }
                 } else {
                     self.scrollView.signinButton = nil
                 }
