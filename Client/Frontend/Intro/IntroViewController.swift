@@ -177,7 +177,7 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
             make.height.equalTo(IntroViewControllerUX.SignInButtonHeight)
             make.width.equalTo(IntroViewControllerUX.SignInButtonWidth)
             //make.bottom.equalTo(self.view).offset(IntroViewControllerUX.StartBrowsingButtonHeight)
-            make.centerX.equalTo(pageControl)
+            //make.centerX.equalTo(pageControl)
         }
 
         addCard(title: IntroViewControllerUX.CardTitleSync, text: IntroViewControllerUX.CardTextSync)
