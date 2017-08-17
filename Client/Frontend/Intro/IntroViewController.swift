@@ -120,7 +120,9 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
             make.left.right.top.equalTo(self.view)
             make.bottom.equalTo(startBrowsingButton.snp.top)
         }
-
+        self.view.layoutIfNeeded()
+        self.scrollView.layoutIfNeeded()
+        
         pageControl = UIPageControl()
         pageControl.pageIndicatorTintColor = UIColor.black.withAlphaComponent(0.3)
         pageControl.currentPageIndicatorTintColor = UIColor.black
@@ -156,7 +158,7 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
             textLabels.append(textLabel)
             introView.addSubview(textLabel)
             textLabel.snp.makeConstraints({ (make) -> Void in
-                make.top.equalTo(titleLabel.snp.bottom).offset(36)
+                make.top.equalTo(titleLabel.snp.bottom).offset(20)
                 make.centerX.equalTo(introView)
                 make.width.equalTo(IntroViewControllerUX.CardTextWidth)
             })
@@ -175,16 +177,14 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
         signInButton.addTarget(self, action: #selector(IntroViewController.SELlogin), for: UIControlEvents.touchUpInside)
         signInButton.snp.makeConstraints { (make) -> Void in
             make.height.equalTo(IntroViewControllerUX.SignInButtonHeight)
-            make.width.equalTo(IntroViewControllerUX.SignInButtonWidth)
         }
+        
         let syncCardView = UIView()
-        addCard(title: IntroViewControllerUX.CardTitleSync, text: IntroViewControllerUX.CardTextSync)
-        addViewsToIntroView(syncCardView, view: signInButton)
-        //addButtonToIntroView(_introView: syncCardView, view: signInButton)
+        //addCard(title: IntroViewControllerUX.CardTitleSync, text: IntroViewControllerUX.CardTextSync)
+        addViewsToIntroView(syncCardView, view: signInButton, title: IntroViewControllerUX.CardTitleSync, text: IntroViewControllerUX.CardTextSync)
         introViews.append(syncCardView)
 
         // Add all the cards to the view, make them invisible with zero alpha
-
         for introView in introViews {
             introView.alpha = 0
             self.view.addSubview(introView)
@@ -197,8 +197,9 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
 
         // Make whole screen scrollable by bringing the scrollview to the top
         view.bringSubview(toFront: scrollView)
-        view.bringSubview(toFront: pageControl)
-        view.bringSubview(toFront: syncCardView)
+        view.sendSubview(toBack: pageControl)
+        scrollView?.bringSubview(toFront: syncCardView)
+        signInButton.superview?.bringSubview(toFront: signInButton)
 
         // Activate the first card
         setActiveIntroView(introViews[0], forPage: 0)
@@ -348,11 +349,11 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
             }, completion: { _ in
                 if page == (IntroViewControllerUX.NumberOfCards - 1) {
                     self.pageControl.alpha = 0
-                    self.scrollView.signinButton = self.signInButton
+                    //self.scrollView.signinButton = self.signInButton
                     self.scrollView.signinButton?.alpha = 1
                     self.scrollView.bringSubview(toFront: self.signInButton)
                 } else {
-                    self.scrollView.signinButton = nil
+                    //self.scrollView.signinButton = nil
                 }
             })
         }
@@ -375,15 +376,8 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
         string.addAttribute(NSParagraphStyleAttributeName, value: paragraphStyle, range: NSRange(location: 0, length: string.length))
         return string
     }
-//    fileprivate func addButtonToIntroView(_introView: UIView, view: UIView) {
-//        introView?.addSubview(view)
-//        view.snp.makeConstraints { (make) -> Void in
-//            make.centerX.equalTo(introView!)
-//            make.width.equalTo(IntroViewControllerUX.CardTextWidth)
-//            make.bottom.equalTo(introView!.snp.bottom)
-//        }
-//    }
-    fileprivate func addViewsToIntroView(_ introView: UIView, view: UIView) {
+
+    fileprivate func addViewsToIntroView(_ introView: UIView, view: UIView, title: String = "", text: String = "") {
         introView.addSubview(view)
         introView.bringSubview(toFront: view)
         view.snp.makeConstraints { (make) -> Void in
@@ -391,7 +385,34 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
             make.width.equalTo(self.view.frame.width <= 320 ? 240 : 280) // TODO Talk to UX about small screen sizes
             make.bottom.equalTo(introView)
         }
-        introView.bringSubview(toFront: view)
+        if !title.isEmpty {
+            let titleLabel = UILabel()
+            titleLabel.numberOfLines = 0
+            titleLabel.textAlignment = NSTextAlignment.center
+            titleLabel.text = title
+            titleLabels.append(titleLabel)
+            introView.addSubview(titleLabel)
+            titleLabel.snp.makeConstraints { (make) -> Void in
+                make.top.equalTo(introView).offset(20)
+                make.centerX.equalTo(introView)
+                make.width.equalTo(IntroViewControllerUX.CardTextWidth)
+            }
+        }
+        if !text.isEmpty {
+            let textLabel = UILabel()
+            textLabel.numberOfLines = 0
+            textLabel.textAlignment = NSTextAlignment.center
+            textLabel.text = text
+            textLabels.append(textLabel)
+            introView.addSubview(textLabel)
+            textLabel.snp.makeConstraints { (make) -> Void in
+                //make.top.equalTo(introView).offset(self.view.frame.width <= 320 ? 15 : 20)
+                //make.bottom.equalTo(view.snp.top).offset(self.view.frame.width <= 320 ? -10 : -15)
+                make.centerX.equalTo(introView)
+                make.centerY.equalTo(introView)
+                make.width.equalTo(self.view.frame.width <= 320 ? 240 : 280) // TODO Talk to UX about small screen sizes
+            }
+        }
     }
     
     fileprivate func setupDynamicFonts() {
