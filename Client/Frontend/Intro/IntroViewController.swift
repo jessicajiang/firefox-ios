@@ -176,11 +176,12 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
         signInButton.snp.makeConstraints { (make) -> Void in
             make.height.equalTo(IntroViewControllerUX.SignInButtonHeight)
             make.width.equalTo(IntroViewControllerUX.SignInButtonWidth)
-            //make.bottom.equalTo(self.view).offset(IntroViewControllerUX.StartBrowsingButtonHeight)
-            //make.centerX.equalTo(pageControl)
         }
-
+        let syncCardView = UIView()
         addCard(title: IntroViewControllerUX.CardTitleSync, text: IntroViewControllerUX.CardTextSync)
+        addViewsToIntroView(syncCardView, view: signInButton)
+        //addButtonToIntroView(_introView: syncCardView, view: signInButton)
+        introViews.append(syncCardView)
 
         // Add all the cards to the view, make them invisible with zero alpha
 
@@ -197,12 +198,13 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
         // Make whole screen scrollable by bringing the scrollview to the top
         view.bringSubview(toFront: scrollView)
         view.bringSubview(toFront: pageControl)
+        view.bringSubview(toFront: syncCardView)
 
         // Activate the first card
         setActiveIntroView(introViews[0], forPage: 0)
         setupDynamicFonts()
     }
-
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         NotificationCenter.default.addObserver(self, selector: #selector(SELDynamicFontChanged(_:)), name: NotificationDynamicFontChanged, object: nil)
@@ -345,11 +347,10 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
                 
             }, completion: { _ in
                 if page == (IntroViewControllerUX.NumberOfCards - 1) {
+                    self.pageControl.alpha = 0
                     self.scrollView.signinButton = self.signInButton
-                    self.scrollView.signinButton?.snp.makeConstraints { (make) -> Void in
-                        make.bottom.equalTo(self.scrollView)
-                        make.centerX.equalTo(self.scrollView)
-                    }
+                    self.scrollView.signinButton?.alpha = 1
+                    self.scrollView.bringSubview(toFront: self.signInButton)
                 } else {
                     self.scrollView.signinButton = nil
                 }
@@ -373,6 +374,24 @@ class IntroViewController: UIViewController, UIScrollViewDelegate {
         let string = NSMutableAttributedString(string: text)
         string.addAttribute(NSParagraphStyleAttributeName, value: paragraphStyle, range: NSRange(location: 0, length: string.length))
         return string
+    }
+//    fileprivate func addButtonToIntroView(_introView: UIView, view: UIView) {
+//        introView?.addSubview(view)
+//        view.snp.makeConstraints { (make) -> Void in
+//            make.centerX.equalTo(introView!)
+//            make.width.equalTo(IntroViewControllerUX.CardTextWidth)
+//            make.bottom.equalTo(introView!.snp.bottom)
+//        }
+//    }
+    fileprivate func addViewsToIntroView(_ introView: UIView, view: UIView) {
+        introView.addSubview(view)
+        introView.bringSubview(toFront: view)
+        view.snp.makeConstraints { (make) -> Void in
+            make.centerX.equalTo(introView)
+            make.width.equalTo(self.view.frame.width <= 320 ? 240 : 280) // TODO Talk to UX about small screen sizes
+            make.bottom.equalTo(introView)
+        }
+        introView.bringSubview(toFront: view)
     }
     
     fileprivate func setupDynamicFonts() {
